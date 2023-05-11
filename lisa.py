@@ -1,3 +1,4 @@
+#！coding=utf-8
 import requests
 import time
 import os
@@ -25,7 +26,7 @@ def submit(api,file,param):
 def get_report(api,task_id):
     response=requests.get(api+task_id).json()
     f=open('/home/yoki/PycharmProjects/lisa/1.json','wb')
-    response_str=json.dumps(response,sort_keys=True,indent=2,separators=(',',':'))
+    response_str=json.dumps(response,sort_keys=True,separators=(',',':'))
     f.write(response_str.encode())
     f.close()
 
@@ -79,9 +80,32 @@ def get_id_list(directory,lisa_path):
     print('id_list:',id_list)
     return id_list
 
-if __name__=="__main__":
-    submit_diretory=r'D:\qbitdownload\VirusShare_ELF_20190212'
-    report_directory='/home/yoki/PycharmProjects/lisa/report'
+from hashlib import md5
+
+def submit_pdf(api,file,param):
+    name=file.split("\\")[-1].encode("utf-8")
+    print(name)
+
+    id=md5(name).hexdigest()
+    files={
+        param:open(file,'rb')
+          }
+    data={
+        'id': id,
+        "time": "",
+        "url": ""
+    }
+    response=requests.post(url=api,files=files,data=data).json()
+
+
+    print(file.encode("utf-8"),"<-->",response)
+    # id_filename[response['task_id']]=file
+    return
+
+def main_malware():
+    # D:\迅雷下载\temp
+    submit_diretory = r'D:\japan_samples\japan_samples\new_sample1\part4'
+    report_directory = '/home/yoki/PycharmProjects/lisa/report'
 
     # task_id=virus_pcap(submitfile_api,"/home/yoki/PycharmProjects/lisa/testbin",'file')
     # time.sleep(40)
@@ -91,7 +115,37 @@ if __name__=="__main__":
     # time.sleep(60)
     # get_report(getreport_api, task_id=task_id)
 
-    id_list=get_id_list(submit_diretory,lisa_path="http://172.18.65.185:4242")
+    id_list = get_id_list(submit_diretory, lisa_path="http://172.18.65.185:4242")
     print('upload finish....')
     time.sleep(120)
     # get_report_list(getreport_api,id_list=id_list,path=report_directory)
+
+def submit_pdf_directory(directory,lisa_path):
+    count=0
+    fileList=[]
+    id_list=[]
+    for root,sub_dirs,files in os.walk(directory):
+        for file in files:
+            fileList.append(os.path.join(root,file))
+
+    fileLen= len(fileList)
+    for file in fileList:
+        try:
+            submit_pdf("http://172.18.65.186:8344/cti_api", file, "file")
+            count += 1
+            print(f'{count}/{fileLen}')
+        except Exception as e:
+            print(file.encode("utf-8") + ' pdf failed'.encode("utf-8"))
+            print(e)
+            continue
+    return id_list
+
+def main_pdf():
+    id_list = submit_pdf_directory(r"C:\Users\guo\Documents\WeChat Files\wxid_seks98w3chxb22\FileStorage\File\2023-02\威胁事件20230210", lisa_path="http://172.18.65.185:4242")
+    print('upload finish....')
+    time.sleep(120)
+    # get_report_list(getreport_api,id_list=id_list,path=report_directory)
+
+if __name__=="__main__":
+    main_malware()
+    # main_pdf()
